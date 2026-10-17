@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+python-multipart
+pylovepdf
+pandas
+openpyxl
+pdfplumber
+reportlab
+pdf2docx
+docx2pdf
