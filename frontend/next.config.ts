@@ -1,13 +1,14 @@
 import type { NextConfig } from "next";
 
-const backendUrl = process.env.BACKEND_URL || 'http://127.0.0.1:8000';
-
 const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
         source: '/api/tools/:path*',
-        destination: `${backendUrl}/api/tools/:path*`,
+        destination:
+          process.env.NODE_ENV === 'development'
+            ? 'http://127.0.0.1:8000/api/tools/:path*'
+            : '/api/index.py',
       },
     ];
   },

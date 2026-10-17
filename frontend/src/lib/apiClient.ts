@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/tools";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/api/tools";
 const POLL_INTERVAL_MS = 1500;
 const MAX_POLL_ATTEMPTS = 3000; // 10 minutes max
 
@@ -37,10 +37,25 @@ export async function submitAndPoll(
     throw new Error(detail);
   }
 
-  const { job_id } = await postRes.json();
+  const postData = await postRes.json();
+  const job_id = postData.job_id;
   if (!job_id) throw new Error("Server did not return a job ID.");
 
-  // 2. Poll until done
+  // If already completed in the POST response (instant serverless execution)
+  if (postData.status === "completed") {
+    const timeInfo = postData.elapsed_time !== undefined && postData.elapsed_time !== null ? ` in ${postData.elapsed_time}s` : "";
+    onStatus?.(`Completed${timeInfo}! Downloading…`);
+    return {
+      filename: postData.filename,
+      downloadUrl: postData.download_url || `${API_BASE}/download/${job_id}`,
+      elapsedTime: postData.elapsed_time,
+    };
+  }
+  if (postData.status === "failed") {
+    throw new Error(postData.error ?? "Conversion failed on the server.");
+  }
+
+  // 2. Poll until done (fallback for background processing)
   onStatus?.("Processing…");
   const pollInterval = 200; // Fast fixed interval
   
